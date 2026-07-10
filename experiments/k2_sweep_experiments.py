@@ -103,6 +103,7 @@ def run_single_experiment(env, env_test, q_opt, q_opt_test,
             loss_type=CONFIG['loss_type'],
             architecture_type=architecture_type,
             weight_sharing=True,
+            use_legacy_init=True,
             K_2=K_2,          # None for Arch1 (ignored); int for Arch2
         )
 

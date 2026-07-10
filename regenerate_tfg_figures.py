@@ -3,15 +3,18 @@ Regenera las figuras del Cap.4 del TFG a partir de los datos experimentales.
 No reentrena — solo visualización.
 
 Estado de cada parte:
-  Parte 1 (espectrales):   REQUIERE freq_response_per_unroll.py — PERDIDO,
-                           nunca commiteado. Figuras ya presentes en images/cap4/.
+  Parte 1 (T_comparison): FUNCIONAL — usa experiments/frequency_response_analysis.py
+                           y los datos de freq_analysis_results/.
   Parte 2 (6-métricas):   FUNCIONAL — usa experiments/visualize_unrolls_results_tfg.py
                            y los datos de unrolls_results/.
   Parte 3 (mapas cliff):  FUNCIONAL — usa experiments/visualize_cliff_variations.py.
+  OMITIDA — espectrales:  freq_response_per_unroll.py nunca commiteado (PERDIDO).
+                           Figuras composition/resolvent ya presentes en images/cap4/.
+  OMITIDA — k2_sweep:     Requiere reruns de k2_sweep_experiments.py + visualize_k2_sweep.py.
 
 Uso:
     source .venv/bin/activate
-    python regenerate_tfg_figures.py          # ejecuta partes 2 y 3
+    python regenerate_tfg_figures.py          # ejecuta partes 1, 2 y 3
     python experiments/regen_6metrics.py      # solo parte 2 (más rápido)
 """
 import sys, os
@@ -31,14 +34,37 @@ VIZ_DIR   = Path("unrolls_results") / "visualizations_tfg"
 VIZ_DIR.mkdir(parents=True, exist_ok=True)
 
 # ============================================================
-# PARTE 1: Figuras espectrales (composición vs resolvente)
+# PARTE 1: T_comparison (operador de transferencia espectral)
 # ============================================================
 print("=" * 60)
-print("PARTE 1: Composición vs resolvente (OMITIDA — script perdido)")
+print("PARTE 1: T_comparison (frequency_response_analysis.py)")
 print("=" * 60)
-print("  freq_response_per_unroll.py nunca fue commiteado y no puede")
-print("  recuperarse. Las figuras en images/cap4/ son las originales.")
-print("  Datos de referencia disponibles en freq_per_unroll_results/.")
+
+try:
+    import experiments.frequency_response_analysis as fra
+    fra.RESULTS_DIR = Path("freq_analysis_results")
+    abs_eigs = fra.get_eigenvalues()
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    fig, axes = plt.subplots(1, 2, figsize=(13, 5.5), sharey=True)
+    for ax, cfg in zip(axes, fra.CONFIGS):
+        fra.plot_T_comparison(ax, cfg["K"], cfg["num_unrolls"], abs_eigs)
+    axes[1].set_ylabel("")
+    fig.suptitle(
+        "Comparación de operadores de transferencia $T(\\lambda)$\n"
+        r"Ideal vs Práctica ($\gamma^t$) vs Aprendida ($h_t$)",
+        fontsize=11, fontweight="bold", y=1.01,
+    )
+    fig.tight_layout()
+    out_tcomp = fra.RESULTS_DIR / "T_comparison.png"
+    fig.savefig(out_tcomp, bbox_inches="tight", dpi=200)
+    plt.close(fig)
+    shutil.copy2(out_tcomp, CAP4 / "T_comparison.png")
+    print(f"  ✓ T_comparison.png")
+except Exception as e:
+    print(f"  ✗ Error en Parte 1: {e}")
+    print("    Verifica que freq_analysis_results/ contiene policy_arch*.npz")
 
 # ============================================================
 # PARTE 2: Figuras 6-métricas + mapas de política (unrolls)

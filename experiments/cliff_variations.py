@@ -350,8 +350,8 @@ def run_single_experiment(
             gamma=cfg["gamma"], tau=cfg["tau"], lr=cfg["lr"],
             N=1, init_q=cfg["init_q"], loss_type=cfg["loss_type"],
             architecture_type=architecture_type,
-            normalize_separately=False,
             weight_sharing=True,
+            use_legacy_init=True,
         )
         trainer = Trainer(
             max_epochs=cfg["max_epochs"],

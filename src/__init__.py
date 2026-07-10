@@ -32,8 +32,6 @@ __all__ = [
     "MirroredCliffWalkingEnv",
     "GeneralizedCliffWalkingEnv",
     "WindyGridWorldEnv",
-    "ChainMDP",
-    "RandomGraphMDP",
     "PolicyEvaluationLayer",
     "PolicyImprovementLayer",
     "UnrolledPolicyIterationModel",
