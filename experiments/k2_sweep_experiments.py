@@ -42,7 +42,8 @@ sys.path.insert(0, project_root)
 
 from src.algorithms.unrolling_policy_iteration import UnrollingPolicyIterationTrain
 from src.environments import CliffWalkingEnv, MirroredCliffWalkingEnv
-from src.utils import get_optimal_q, test_pol_err
+from src.utils import (get_optimal_q, test_pol_err,
+                       compute_optimality_gap, compute_optimality_gap_V)
 
 
 # ============================================================================
@@ -72,41 +73,6 @@ CONFIG = {
 def get_k2_values(K: int):
     """All valid K_2 values for Architecture 2: 0 to K+1 (inclusive)."""
     return list(range(K + 2))
-
-
-# ============================================================================
-# METRIC COMPUTATION FUNCTIONS
-# ============================================================================
-
-def compute_optimality_gap(q, q_opt, device='cpu'):
-    """Optimality Gap directly from q (model output)."""
-    q = q.to(device)
-    q_opt = q_opt.to(device)
-
-    diff = q - q_opt
-    optimality_gap_joint = float(torch.norm(diff) / torch.norm(q_opt))
-
-    q_normalized = q / torch.norm(q)
-    q_opt_normalized = q_opt / torch.norm(q_opt)
-    optimality_gap_separate = float(torch.norm(q_normalized - q_opt_normalized))
-
-    return optimality_gap_joint, optimality_gap_separate
-
-
-def compute_optimality_gap_V(q, q_opt, device='cpu'):
-    """Optimality Gap based on V = max_a q(s,a)."""
-    q = q.to(device)
-    q_opt = q_opt.to(device)
-
-    V     = q.view(-1, 4).max(dim=1).values
-    V_opt = q_opt.view(-1, 4).max(dim=1).values
-
-    optimality_gap_V_joint    = float(torch.norm(V - V_opt) / torch.norm(V_opt))
-    V_norm     = V     / torch.norm(V)
-    V_opt_norm = V_opt / torch.norm(V_opt)
-    optimality_gap_V_separate = float(torch.norm(V_norm - V_opt_norm))
-
-    return optimality_gap_V_joint, optimality_gap_V_separate
 
 
 # ============================================================================

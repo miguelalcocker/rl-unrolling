@@ -208,3 +208,6 @@ cython_debug/
 
 # PDF files
 *.pdf
+
+# Archived/draft scripts
+_archive/

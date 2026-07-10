@@ -53,73 +53,8 @@ sys.path.insert(0, project_root)
 
 from src.algorithms.unrolling_policy_iteration import UnrollingPolicyIterationTrain
 from src.environments import CliffWalkingEnv, MirroredCliffWalkingEnv
-from src.utils import get_optimal_q, test_pol_err
-
-
-# ============================================================================
-# METRIC COMPUTATION FUNCTIONS
-# ============================================================================
-
-def compute_optimality_gap(q, q_opt, device='cpu'):
-    """
-    Compute Optimality Gap directly from q (model output), NOT q_π.
-    This uses the SAME formula as corrected_experiments_analysis.py.
-
-    Args:
-        q: Q-values from trained model output (model.q or model.q_test)
-        q_opt: Optimal Q-values
-
-    Returns:
-        optimality_gap_joint: ||q - q*|| / ||q*||
-        optimality_gap_separate: ||q/||q|| - q*/||q*|||
-    """
-    q = q.to(device)
-    q_opt = q_opt.to(device)
-
-    # Joint normalization: ||q - q*|| / ||q*||
-    diff = q - q_opt
-    optimality_gap_joint = float(torch.norm(diff) / torch.norm(q_opt))
-
-    # Separate normalization: ||q/||q|| - q*/||q*|||
-    q_normalized = q / torch.norm(q)
-    q_opt_normalized = q_opt / torch.norm(q_opt)
-    diff_normalized = q_normalized - q_opt_normalized
-    optimality_gap_separate = float(torch.norm(diff_normalized))
-
-    return optimality_gap_joint, optimality_gap_separate
-
-
-def compute_optimality_gap_V(q, q_opt, device='cpu'):
-    """
-    Compute Optimality Gap based on V (value function) instead of q.
-    V(s) = max_a q(s,a) for each state.
-
-    Args:
-        q: Q-values (flat tensor of size nS*nA)
-        q_opt: Optimal Q-values (flat tensor of size nS*nA)
-
-    Returns:
-        optimality_gap_V_joint: ||V - V*|| / ||V*||
-        optimality_gap_V_separate: ||V/||V|| - V*/||V*|||
-    """
-    q = q.to(device)
-    q_opt = q_opt.to(device)
-
-    # Reshape to (nS, nA) and compute V = max_a q(s,a)
-    V = q.view(-1, 4).max(dim=1).values
-    V_opt = q_opt.view(-1, 4).max(dim=1).values
-
-    # Joint normalization: ||V - V*|| / ||V*||
-    diff = V - V_opt
-    optimality_gap_V_joint = float(torch.norm(diff) / torch.norm(V_opt))
-
-    # Separate normalization: ||V/||V|| - V*/||V*|||
-    V_normalized = V / torch.norm(V)
-    V_opt_normalized = V_opt / torch.norm(V_opt)
-    diff_normalized = V_normalized - V_opt_normalized
-    optimality_gap_V_separate = float(torch.norm(diff_normalized))
-
-    return optimality_gap_V_joint, optimality_gap_V_separate
+from src.utils import (get_optimal_q, test_pol_err,
+                       compute_optimality_gap, compute_optimality_gap_V)
 
 
 # ============================================================================

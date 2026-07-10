@@ -1,7 +1,7 @@
 """Visualize Cliff Variations Experimental Results.
 
 Generates three types of figures per variant, mirroring the style of
-visualize_unrolls_results_v2.py but adapted for cliff transfer experiments:
+visualize_unrolls_results_tfg.py but adapted for cliff transfer experiments:
 
   1. {variant}_agreement.png  — 3×2: POG (non-sq), PVG, Agreement vs K
                                    IQR bands for all metrics (from CSV)

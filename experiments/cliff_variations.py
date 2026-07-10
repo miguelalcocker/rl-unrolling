@@ -3,7 +3,7 @@
 Compares transfer performance across 5 cliff configurations.
 Identical metrics to unrolls_experiments_analysis.py.
 Results are saved per-variant in cliff_variations_results/{variant}/
-with the same CSV layout so visualize_unrolls_results_v2.py can be run on them.
+with the same CSV layout so visualize_unrolls_results_tfg.py can be run on them.
 
 Variants (all 4×12, nS=48):
   std_mirrored  — bottom cliff → top cliff            [baseline, same as main project]
@@ -47,6 +47,8 @@ sys.path.insert(0, project_root)
 from src.algorithms.unrolling_policy_iteration import UnrollingPolicyIterationTrain
 from src.algorithms.generalized_policy_iteration import PolicyIterationTrain
 from src.environments import GeneralizedCliffWalkingEnv, WindyGridWorldEnv
+from src.utils import (compute_optimality_gap, compute_optimality_gap_V,
+                       get_optimal_q_for_env)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -260,23 +262,6 @@ ALL_VARIANT_NAMES = list(VARIANTS.keys())
 # Metric helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
-def get_optimal_q_for_env(env, goal_row: int, gamma: float = 0.99,
-                          max_eval_iters: int = 50, max_epochs: int = 50):
-    """Compute optimal Q-values via policy iteration on any env."""
-    model = PolicyIterationTrain(
-        env, gamma=gamma, goal_row=goal_row, max_eval_iters=max_eval_iters
-    )
-    trainer = Trainer(
-        max_epochs=max_epochs,
-        enable_progress_bar=False,
-        enable_model_summary=False,
-        logger=False,
-        enable_checkpointing=False,
-    )
-    trainer.fit(model)
-    return model.q.detach()
-
-
 def eval_policy_extended(
     Pi: torch.Tensor, q_model: torch.Tensor, q_opt: torch.Tensor, env,
     gamma: float = 0.99, max_eval_iters: int = 200, device: str = "cpu",
@@ -339,22 +324,6 @@ def eval_policy_extended(
     soft       = float((Pi_np * is_opt).sum(axis=1)[valid].mean() * 100.0)
 
     return pog_joint, pog_sep, pvg_joint, pvg_sep, hard, soft
-
-
-def compute_optimality_gap(q: torch.Tensor, q_opt: torch.Tensor, device: str = "cpu"):
-    q, q_opt = q.to(device), q_opt.to(device)
-    joint = float(torch.norm(q - q_opt) / torch.norm(q_opt))
-    sep   = float(torch.norm(q / torch.norm(q) - q_opt / torch.norm(q_opt)))
-    return joint, sep
-
-
-def compute_optimality_gap_V(q: torch.Tensor, q_opt: torch.Tensor, device: str = "cpu"):
-    q, q_opt = q.to(device), q_opt.to(device)
-    V      = q.view(-1, 4).max(dim=1).values
-    V_opt  = q_opt.view(-1, 4).max(dim=1).values
-    joint  = float(torch.norm(V - V_opt) / torch.norm(V_opt))
-    sep    = float(torch.norm(V / torch.norm(V) - V_opt / torch.norm(V_opt)))
-    return joint, sep
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -504,7 +473,7 @@ def run_single_experiment(
                     f"agreement_soft_test{sfx}": soft_ex,
                 })
 
-        # ── Save policy data (compatible with visualize_unrolls_results_v2.py)
+        # ── Save policy data (compatible with visualize_unrolls_results_tfg.py)
         policy_fname = (
             f"policy_arch{architecture_type}_K{K}_"
             f"unrolls{num_unrolls}_run{run_idx}_temp.npz"

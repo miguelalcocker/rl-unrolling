@@ -1,162 +1,131 @@
 """
-Regenerates Cap4 TFG figures using existing experimental data.
-No retraining — only visualization.
+Regenera las figuras del Cap.4 del TFG a partir de los datos experimentales.
+No reentrena — solo visualización.
 
-DEPENDENCY NOTE:
-  Part 1 (spectral figures) requires freq_response_per_unroll.py (lost — never committed).
-  Part 2 (6-metric unrolls figures) requires visualize_unrolls_results_v2.py (lost — never committed).
-  Part 3 (cliff variation policy maps) uses experiments/visualize_cliff_variations.py (available).
+Estado de cada parte:
+  Parte 1 (espectrales):   REQUIERE freq_response_per_unroll.py — PERDIDO,
+                           nunca commiteado. Figuras ya presentes en images/cap4/.
+  Parte 2 (6-métricas):   FUNCIONAL — usa experiments/visualize_unrolls_results_tfg.py
+                           y los datos de unrolls_results/.
+  Parte 3 (mapas cliff):  FUNCIONAL — usa experiments/visualize_cliff_variations.py.
 
-  The generated figures are already present in TFG/memoria/images/cap4/.
-  To regenerate only Part 3 (cliff maps), run this script and comment out Parts 1 and 2.
+Uso:
+    source .venv/bin/activate
+    python regenerate_tfg_figures.py          # ejecuta partes 2 y 3
+    python experiments/regen_6metrics.py      # solo parte 2 (más rápido)
 """
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "experiments"))
 
 import shutil
-import numpy as np
-import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import torch
 from pathlib import Path
 
 from src.utils import get_optimal_q
 
-# ── Output dir
-CAP4 = Path("TFG/memoria/images/cap4")
-FREQ_DIR = Path("freq_per_unroll_results")
-UNROLLS_DIR = Path("unrolls_results_v3_3")
-VIZ_DIR = UNROLLS_DIR / "visualizations_v2"
+CAP4      = Path("TFG/memoria/images/cap4")
+FREQ_DIR  = Path("freq_per_unroll_results")
+VIZ_DIR   = Path("unrolls_results") / "visualizations_tfg"
 VIZ_DIR.mkdir(parents=True, exist_ok=True)
 
 # ============================================================
-# PART 1: Composition figures (from freq_response_per_unroll)
+# PARTE 1: Figuras espectrales (composición vs resolvente)
 # ============================================================
 print("=" * 60)
-print("PART 1: Composition vs resolvent figures")
+print("PARTE 1: Composición vs resolvente (OMITIDA — script perdido)")
 print("=" * 60)
-
-import freq_response_per_unroll as frq
-
-abs_eigs = frq.get_eigenvalues()
-csv_path = FREQ_DIR / "all_results.csv"
-df_freq  = pd.read_csv(csv_path)
-df_freq = frq.select_representatives(df_freq, FREQ_DIR, frq.CFG)
-
-u_groups = sorted({c["U_max"] for c in frq.CONFIGS})
-for U_group in u_groups:
-    cfg_sub = [c for c in frq.CONFIGS if c["U_max"] == U_group]
-    suf = f"_U{U_group}"
-    print(f"\nGenerating composition figures for U_max={U_group}...")
-    frq.plot_composition_and_resolvent(
-        FREQ_DIR, df_freq, abs_eigs, configs_list=cfg_sub, fname_suffix=suf)
-    frq.plot_composition_and_resolvent_indexed(
-        FREQ_DIR, df_freq, abs_eigs, configs_list=cfg_sub, fname_suffix=suf)
-
-# Copy to images/cap4
-for fname in [
-    "composition_vs_resolvent_U4.png",
-    "composition_vs_resolvent_U5.png",
-    "composition_vs_resolvent_indexed_U4.png",
-]:
-    src = FREQ_DIR / fname
-    dst = CAP4 / fname
-    if src.exists():
-        shutil.copy2(src, dst)
-        print(f"✓ Copied {fname} to images/cap4/")
-    else:
-        print(f"✗ NOT FOUND: {src}")
+print("  freq_response_per_unroll.py nunca fue commiteado y no puede")
+print("  recuperarse. Las figuras en images/cap4/ son las originales.")
+print("  Datos de referencia disponibles en freq_per_unroll_results/.")
 
 # ============================================================
-# PART 2: Policy maps (from visualize_unrolls_results_v2)
+# PARTE 2: Figuras 6-métricas + mapas de política (unrolls)
 # ============================================================
 print()
 print("=" * 60)
-print("PART 2: Policy maps (main unrolls, 2-column Arch1 vs Arch2)")
+print("PARTE 2: Figuras 6-métricas y mapas de política")
 print("=" * 60)
 
-import visualize_unrolls_results_v2 as viz
+import visualize_unrolls_results_tfg as viz
 
-_orig_output = viz.OUTPUT_DIR
 viz.OUTPUT_DIR = VIZ_DIR
 
+print("Cargando resultados de unrolls_results/ ...")
 df_viz = viz.load_results()
+print(f"  {len(df_viz)} filas cargadas.")
 
-print("\nComputing optimal Q-values...")
-q_opt = get_optimal_q(mirror_env=False, use_logger=False,
-                      max_eval_iters=50, max_epochs=50)
-q_opt_test = get_optimal_q(mirror_env=True, use_logger=False,
-                            max_eval_iters=50, max_epochs=50)
+print("\nGenerando figuras 6-métricas ...")
+viz.plot_comprehensive_6metrics(df_viz)
+for src in VIZ_DIR.glob("comprehensive_6metrics*.png"):
+    shutil.copy2(src, CAP4 / src.name)
+    print(f"  ✓ {src.name}")
 
-TARGET_UNROLLS = [4, 5, 10, 15]
+print("\nCalculando Q óptimas ...")
+q_opt      = get_optimal_q(mirror_env=False, use_logger=False, max_eval_iters=50, max_epochs=50)
+q_opt_test = get_optimal_q(mirror_env=True,  use_logger=False, max_eval_iters=50, max_epochs=50)
 
-for num_unrolls in TARGET_UNROLLS:
+for num_unrolls in [4, 5, 10, 15]:
     matches = [v for v in df_viz['num_unrolls'].unique()
                if abs(float(v) - num_unrolls) < 0.1]
     if not matches:
-        print(f"  ✗ No data for num_unrolls={num_unrolls}")
+        print(f"  ✗ Sin datos para num_unrolls={num_unrolls}")
         continue
     nu = matches[0]
-    print(f"\nGenerating policy maps for num_unrolls={nu}...")
+    print(f"\n  num_unrolls={nu} ...")
     viz.plot_policy_maps_train_universal_scale(df_viz, nu, q_opt)
     viz.plot_policy_maps_test_universal_scale(df_viz, nu, q_opt_test)
-
     for suffix in ["train", "test"]:
         src = VIZ_DIR / f"unrolls{nu}_v2_policy_maps_{suffix}_universal_scale.png"
-        dst = CAP4 / f"unrolls{num_unrolls}_v2_policy_maps_{suffix}_universal_scale.png"
+        dst = CAP4   / f"unrolls{num_unrolls}_v2_policy_maps_{suffix}_universal_scale.png"
         if src.exists():
             shutil.copy2(src, dst)
-            print(f"✓ Copied → {dst.name}")
+            print(f"    ✓ {dst.name}")
         else:
-            print(f"✗ NOT FOUND: {src}")
+            print(f"    ✗ No encontrado: {src}")
 
 # ============================================================
-# PART 3: Transfer experiment policy maps
+# PARTE 3: Mapas de política — variantes cliff
 # ============================================================
 print()
 print("=" * 60)
-print("PART 3: Transfer experiment policy maps")
+print("PARTE 3: Mapas de política — variantes cliff")
 print("=" * 60)
 
-import sys
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "experiments"))
 import visualize_cliff_variations as vcv
 
 CLIFF_RESULTS = Path("cliff_variations_results")
 
-# (variant, results_subdir, U_to_show, cap4_output_name)
 TRANSFER_VARIANTS = [
-    ("center_start_std", "center_start_std", 4,  "center_start_std_policy_maps"),
-    ("std_vertical",     "std_vertical",     5,  "std_vertical_policy_maps"),
-    ("large_std",        "large_std",        5,  "large_std_policy_maps"),
-    ("std_windy_random", "std_windy_random", 5,  "std_windy_random_policy_maps"),
+    ("center_start_std", 4, "center_start_std_policy_maps"),
+    ("std_vertical",     5, "std_vertical_policy_maps"),
+    ("large_std",        5, "large_std_policy_maps"),
+    ("std_windy_random", 5, "std_windy_random_policy_maps"),
 ]
 
-for variant_name, results_subdir, U_show, out_stem in TRANSFER_VARIANTS:
-    results_dir = CLIFF_RESULTS / results_subdir
+for variant_name, U_show, out_stem in TRANSFER_VARIANTS:
+    results_dir = CLIFF_RESULTS / variant_name
     if not results_dir.exists():
-        print(f"  ✗ Results dir not found: {results_dir}")
+        print(f"  ✗ Sin resultados para {variant_name}")
         continue
 
-    print(f"\nGenerating policy maps for {variant_name} (U={U_show})...")
+    print(f"\n  {variant_name} (U={U_show}) ...")
     env_cfg = vcv.VARIANT_ENV_CONFIG.get(variant_name)
     if env_cfg is None:
-        print(f"  ✗ No env config for {variant_name}")
+        print(f"  ✗ Sin configuración de entorno para {variant_name}")
         continue
 
     env_tr_type, env_te_type, goal_row_tr, goal_row_te = env_cfg
-
     try:
-        env_tr  = vcv._make_env(env_tr_type)
-        env_te  = vcv._make_env(env_te_type)
-        q_opt_v = vcv.get_optimal_q(env=env_tr, use_logger=False,
-                                    max_eval_iters=50, max_epochs=50)
+        env_tr     = vcv._make_env(env_tr_type)
+        env_te     = vcv._make_env(env_te_type)
+        q_opt_v    = vcv.get_optimal_q(env=env_tr, use_logger=False,
+                                       max_eval_iters=50, max_epochs=50)
         q_opt_te_v = vcv.get_optimal_q(env=env_te, use_logger=False,
                                        max_eval_iters=50, max_epochs=50)
     except Exception as e:
-        print(f"  ✗ Error building env/q_opt for {variant_name}: {e}")
+        print(f"  ✗ Error construyendo entorno para {variant_name}: {e}")
         continue
 
     vcv.plot_policy_maps(
@@ -167,18 +136,15 @@ for variant_name, results_subdir, U_show, out_stem in TRANSFER_VARIANTS:
         num_unrolls=U_show,
     )
 
-    # Copy the generated test map to cap4 with expected name
     vis_dir = results_dir / "visualizations"
-    # prefer test (shows transfer result); fall back to train
     for suffix in ["test", "train"]:
         src = vis_dir / f"{variant_name}_U{U_show}_policy_maps_{suffix}_universal_scale.png"
         if src.exists():
-            dst = CAP4 / f"{out_stem}.png"
-            shutil.copy2(src, dst)
-            print(f"✓ Copied {src.name} → {dst.name} (mode={suffix})")
+            shutil.copy2(src, CAP4 / f"{out_stem}.png")
+            print(f"    ✓ {out_stem}.png (modo={suffix})")
             break
     else:
-        print(f"  ✗ No output found for {variant_name}")
+        print(f"  ✗ Sin salida para {variant_name}")
 
 print()
-print("All done.")
+print("Hecho.")

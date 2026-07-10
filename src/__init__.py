@@ -19,7 +19,9 @@ from .models import (
     PolicyImprovementLayer,
     UnrolledPolicyIterationModel,
 )
-from .utils import get_optimal_q, test_pol_err, plot_errors, save_error_matrix_to_csv
+from .utils import (get_optimal_q, get_optimal_q_for_env,
+                    compute_optimality_gap, compute_optimality_gap_V,
+                    test_pol_err, plot_errors, save_error_matrix_to_csv)
 from .plots import plot_policy_and_value, plot_Pi, plot_filter_coefs
 
 __version__ = "1.0.0"
@@ -36,6 +38,9 @@ __all__ = [
     "PolicyImprovementLayer",
     "UnrolledPolicyIterationModel",
     "get_optimal_q",
+    "get_optimal_q_for_env",
+    "compute_optimality_gap",
+    "compute_optimality_gap_V",
     "test_pol_err",
     "plot_errors",
     "save_error_matrix_to_csv",

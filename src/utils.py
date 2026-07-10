@@ -154,7 +154,59 @@ def plot_errors(errs: np.ndarray, x_vals: List, exps: List[Dict[str, Any]],
     plt.tight_layout()
     plt.show()
 
-def save_error_matrix_to_csv(error_matrix: np.ndarray, xaxis: List, 
+def compute_optimality_gap(q: torch.Tensor, q_opt: torch.Tensor,
+                           device: str = "cpu") -> tuple:
+    """Optimality gap between q (model output) and q* (optimal Q-values).
+
+    Returns:
+        (joint, separate) where joint = ||q-q*||/||q*||
+        and separate = ||q/||q|| - q*/||q*||||
+    """
+    q, q_opt = q.to(device), q_opt.to(device)
+    joint  = float(torch.norm(q - q_opt) / torch.norm(q_opt))
+    sep    = float(torch.norm(q / torch.norm(q) - q_opt / torch.norm(q_opt)))
+    return joint, sep
+
+
+def compute_optimality_gap_V(q: torch.Tensor, q_opt: torch.Tensor,
+                              device: str = "cpu") -> tuple:
+    """Optimality gap computed on V(s) = max_a q(s,a) instead of q directly.
+
+    Returns:
+        (joint, separate) where joint = ||V-V*||/||V*||
+        and separate = ||V/||V|| - V*/||V*||||
+    """
+    q, q_opt = q.to(device), q_opt.to(device)
+    V      = q.view(-1, 4).max(dim=1).values
+    V_opt  = q_opt.view(-1, 4).max(dim=1).values
+    joint  = float(torch.norm(V - V_opt) / torch.norm(V_opt))
+    sep    = float(torch.norm(V / torch.norm(V) - V_opt / torch.norm(V_opt)))
+    return joint, sep
+
+
+def get_optimal_q_for_env(env, goal_row: int, gamma: float = 0.99,
+                           max_eval_iters: int = 50,
+                           max_epochs: int = 50) -> torch.Tensor:
+    """Compute optimal Q-values via policy iteration on any env.
+
+    More general than get_optimal_q — accepts any env object instead of
+    being hardcoded to CliffWalkingEnv / MirroredCliffWalkingEnv.
+    """
+    model = PolicyIterationTrain(
+        env, gamma=gamma, goal_row=goal_row, max_eval_iters=max_eval_iters
+    )
+    trainer = Trainer(
+        max_epochs=max_epochs,
+        enable_progress_bar=False,
+        enable_model_summary=False,
+        logger=False,
+        enable_checkpointing=False,
+    )
+    trainer.fit(model)
+    return model.q.detach()
+
+
+def save_error_matrix_to_csv(error_matrix: np.ndarray, xaxis: List,
                             exps: List[Dict[str, Any]], filename: str, 
                             delimiter: str = ';') -> None:
     """Save error matrix to CSV file.
