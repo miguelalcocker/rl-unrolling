@@ -74,10 +74,7 @@ CONFIG = {
     "tau": 5.0,
     "lr": 5e-3,
     "gamma": 0.99,
-    # NOTE: Pipeline B uses "original_no_detach". Pipeline A scripts
-    # (influence_*.py, moved to _archive/) used "original_with_detach".
-    # This difference is intentional and must be preserved for reproducibility.
-    "loss_type": "original_no_detach",
+    "loss_type": "original_no_detach",  # detach variant produces different results
     "init_q": "random",
     "architectures": [1, 2],
 }

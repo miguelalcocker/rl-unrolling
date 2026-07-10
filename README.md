@@ -96,7 +96,7 @@ Lee los datos experimentales ya guardados y vuelca las figuras en `TFG/memoria/i
 
 ### Experimento 1 y 2 — Influencia del número de unrolls U y del orden del filtro K
 
-Corresponde a las Secciones 4.2 y 4.3 de la memoria.
+Corresponde a la Sección 4.2 de la memoria (apartado «Número de capas U y orden del filtro K»).
 
 ```bash
 # Entrenar (todas las configuraciones de U y K)
@@ -115,7 +115,7 @@ Resultados en `unrolls_results/`.
 
 ### Experimento 3 — Barrido del orden K₂ en Arquitectura 2
 
-Corresponde a la Sección 4.4 de la memoria.
+Corresponde a la Sección 4.2 de la memoria (apartado «Orden del filtro K₂ en la Arquitectura 2»).
 
 ```bash
 # Entrenar
@@ -131,7 +131,7 @@ Resultados en `k2_sweep_results/`.
 
 ### Experimento 4 — Análisis de respuesta en frecuencia
 
-Corresponde a la Sección 4.5 de la memoria. Lee coeficientes guardados en `freq_analysis_results/`; no requiere reentrenamiento.
+Corresponde a la Sección 4.2 de la memoria (apartado «Análisis espectral»). Lee coeficientes guardados en `freq_analysis_results/`; no requiere reentrenamiento.
 
 ```bash
 python experiments/frequency_response_analysis.py
@@ -143,7 +143,7 @@ Figuras en `freq_analysis_results/` (`T_comparison.png`, `T_composition.png`).
 
 ### Experimento 5 — Generalización estructural (transferibilidad)
 
-Corresponde a la Sección 4.6 de la memoria. Compara el comportamiento de los filtros aprendidos en entornos con topología, escala y estocasticidad distintas.
+Corresponde a las Secciones 4.3–4.5 de la memoria. Compara el comportamiento de los filtros aprendidos en entornos con topología, escala y estocasticidad distintas.
 
 ```bash
 # Entrenar todas las variantes

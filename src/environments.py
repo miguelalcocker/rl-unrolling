@@ -2,7 +2,7 @@
 
 This module contains custom environment implementations:
 
-  Legacy (backward-compatible wrappers around gymnasium):
+  Core environments (gymnasium wrappers):
     - CliffWalkingEnv          Standard 4×12 CliffWalking, modified goal.
     - MirroredCliffWalkingEnv  Cliff moved to top row.
 
@@ -31,7 +31,7 @@ ACT_LEFT  = 3
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Legacy environments  (kept for full backward compatibility)
+# Core environments (gymnasium wrappers)
 # ─────────────────────────────────────────────────────────────────────────────
 
 class CliffWalkingEnv:

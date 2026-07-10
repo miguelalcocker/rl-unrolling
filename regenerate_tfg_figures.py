@@ -15,7 +15,6 @@ Estado de cada parte:
 Uso:
     source .venv/bin/activate
     python regenerate_tfg_figures.py          # ejecuta partes 1, 2 y 3
-    python experiments/regen_6metrics.py      # solo parte 2 (más rápido)
 """
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
