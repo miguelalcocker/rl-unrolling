@@ -35,6 +35,7 @@ import torch
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from src.environments import CliffWalkingEnv
+from src.plots import ARCH_COLORS
 
 
 RESULTS_DIR = Path("freq_analysis_results")
@@ -42,8 +43,8 @@ GAMMA = 0.99
 
 C_IDEAL = "#555555"
 C_PRACT = "#009960"
-C_ARCH1 = "#0064A0"
-C_ARCH2 = "#B45A00"
+C_ARCH1 = ARCH_COLORS[1]
+C_ARCH2 = ARCH_COLORS[2]
 
 plt.rcParams.update({
     "font.family": "serif",

@@ -206,6 +206,71 @@ def get_optimal_q_for_env(env, goal_row: int, gamma: float = 0.99,
     return model.q.detach()
 
 
+def eval_policy_extended(
+    Pi: torch.Tensor, q_model: torch.Tensor, q_opt: torch.Tensor, env,
+    gamma: float = 0.99, max_eval_iters: int = 200, device: str = "cpu",
+):
+    """Comprehensive policy evaluation: POG (squared), PVG, and Agreement.
+
+    More complete than test_pol_err — adds Policy Value Gap and action Agreement.
+    Requires env with .nS, .nA, .P, .r, .cliff_set (set of ints), .goal_state (int).
+
+    Returns:
+        pog_joint, pog_sep   — Policy Optimality Gap (squared L2 errors)
+        pvg_joint, pvg_sep   — Policy Value Gap V_π vs V* (not squared)
+        hard_agreement       — hard agreement % (greedy action in optimal set)
+        soft_agreement       — soft agreement % (prob mass on optimal actions)
+    """
+    nS, nA = env.nS, env.nA
+    P       = env.P.to(device)
+    r       = env.r.to(device)
+    q_opt_d = q_opt.to(device)
+    Pi_d    = Pi.to(device)
+
+    # Deterministic greedy policy
+    max_vals = Pi_d.max(dim=1, keepdim=True).values
+    is_max   = (Pi_d == max_vals)
+    greedy   = torch.multinomial(is_max.float(), num_samples=1).squeeze(1)
+    Pi_det   = torch.zeros_like(Pi_d)
+    Pi_det[torch.arange(nS, device=device), greedy] = 1.0
+
+    Pi_ext = torch.zeros(nS, nS * nA, device=device)
+    rows   = torch.arange(nS, device=device).repeat_interleave(nA)
+    cols   = torch.arange(nS * nA, device=device)
+    Pi_ext[rows, cols] = Pi_det.flatten()
+
+    P_pi = P @ Pi_ext
+    q_pi = torch.zeros(nS * nA, device=device)
+    for _ in range(max_eval_iters):
+        q_pi = r + gamma * (P_pi @ q_pi)
+
+    # POG (squared)
+    pog_joint = float((torch.norm(q_pi - q_opt_d) / torch.norm(q_opt_d)) ** 2)
+    pog_sep   = float(torch.norm(q_pi / torch.norm(q_pi) - q_opt_d / torch.norm(q_opt_d)) ** 2)
+
+    # PVG: V_π_greedy vs V* (not squared)
+    V_pi  = q_pi.view(nS, nA).max(dim=1).values
+    V_opt = q_opt_d.view(nS, nA).max(dim=1).values
+    pvg_joint = float(torch.norm(V_pi - V_opt) / torch.norm(V_opt))
+    pvg_sep   = float(torch.norm(V_pi / torch.norm(V_pi) - V_opt / torch.norm(V_opt)))
+
+    # Agreement (greedy action vs optimal action set; excludes terminal states)
+    Pi_np     = Pi.cpu().numpy()
+    q_mod_np  = q_model.cpu().numpy()
+    q_opt_np  = q_opt.cpu().numpy()
+    terminal  = env.cliff_set | {env.goal_state}
+    q_mat     = q_mod_np.reshape(nS, nA)
+    q_opt_mat = q_opt_np.reshape(nS, nA)
+    is_opt    = (q_opt_mat >= q_opt_mat.max(axis=1, keepdims=True) - 1e-6)
+    g_np      = q_mat.argmax(axis=1)
+    valid     = np.array([s not in terminal for s in range(nS)])
+    hard      = float(np.array([is_opt[s, g_np[s]] for s in range(nS)],
+                               dtype=float)[valid].mean() * 100.0)
+    soft      = float((Pi_np * is_opt).sum(axis=1)[valid].mean() * 100.0)
+
+    return pog_joint, pog_sep, pvg_joint, pvg_sep, hard, soft
+
+
 def save_error_matrix_to_csv(error_matrix: np.ndarray, xaxis: List,
                             exps: List[Dict[str, Any]], filename: str, 
                             delimiter: str = ';') -> None:

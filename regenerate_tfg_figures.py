@@ -137,15 +137,15 @@ for variant_name, U_show, out_stem in TRANSFER_VARIANTS:
         continue
 
     print(f"\n  {variant_name} (U={U_show}) ...")
-    env_cfg = vcv.VARIANT_ENV_CONFIG.get(variant_name)
+    env_cfg = vcv.VARIANT_ENVS.get(variant_name)
     if env_cfg is None:
         print(f"  ✗ Sin configuración de entorno para {variant_name}")
         continue
 
     env_tr_type, env_te_type, goal_row_tr, goal_row_te = env_cfg
     try:
-        env_tr     = vcv._make_env(env_tr_type)
-        env_te     = vcv._make_env(env_te_type)
+        env_tr     = vcv._build_env(env_tr_type)
+        env_te     = vcv._build_env(env_te_type)
         q_opt_v    = vcv.get_optimal_q(env=env_tr, use_logger=False,
                                        max_eval_iters=50, max_epochs=50)
         q_opt_te_v = vcv.get_optimal_q(env=env_te, use_logger=False,

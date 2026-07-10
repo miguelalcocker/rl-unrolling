@@ -29,13 +29,14 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+from src.plots import ARCH_COLORS
 
 RESULTS_DIR = Path("k2_sweep_results")
 VIZ_DIR = RESULTS_DIR / "visualizations"
 VIZ_DIR.mkdir(parents=True, exist_ok=True)
 
-C_ARCH1 = "#0173B2"
-C_ARCH2 = "#DE8F05"
+C_ARCH1 = ARCH_COLORS[1]
+C_ARCH2 = ARCH_COLORS[2]
 
 plt.rcParams.update({
     "font.family": "serif",

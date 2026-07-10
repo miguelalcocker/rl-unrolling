@@ -28,7 +28,7 @@ import torch
 from pathlib import Path
 import matplotlib.ticker as ticker
 
-from src.plots import plot_policy_and_value
+from src.plots import plot_policy_and_value, ARCH_COLORS
 from src.utils import get_optimal_q
 
 # ============================================================================
@@ -39,8 +39,7 @@ RESULTS_DIR = Path("unrolls_results")
 OUTPUT_DIR = RESULTS_DIR / "visualizations_v2"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-# Professional color scheme
-COLORS_ARCH = {1: '#0173B2', 2: '#DE8F05'}  # Azul y Naranja
+COLORS_ARCH = ARCH_COLORS
 
 # ============================================================================
 # DATA LOADING

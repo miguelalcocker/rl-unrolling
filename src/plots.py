@@ -9,6 +9,10 @@ import numpy as np
 from typing import Tuple, Optional, List
 import torch
 
+# Canonical architecture colors — import these in all visualization scripts
+# to ensure consistent appearance across every TFG figure.
+ARCH_COLORS = {1: '#0173B2', 2: '#DE8F05'}
+
 
 def plot_policy_and_value(q: torch.Tensor, Pi: torch.Tensor,
                          highlight_cliffs: bool = True, goal_row: int = 3,

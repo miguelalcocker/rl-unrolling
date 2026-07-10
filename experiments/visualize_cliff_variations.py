@@ -41,7 +41,7 @@ sys.path.insert(0, project_root)
 
 from src.environments import GeneralizedCliffWalkingEnv
 from src.algorithms.generalized_policy_iteration import PolicyIterationTrain
-from src.plots import plot_policy_and_value
+from src.plots import plot_policy_and_value, ARCH_COLORS
 from pytorch_lightning import Trainer
 
 
@@ -53,7 +53,7 @@ RESULTS_BASE    = Path("cliff_variations_results")
 NUM_UNROLLS_SHOW = 10          # default fixed unrolls for agreement/maps figures
 K_SHOW           = 10          # K used for policy map representative selection
 
-COLORS_ARCH = {1: '#0173B2', 2: '#DE8F05'}
+COLORS_ARCH = ARCH_COLORS
 
 ALL_VARIANTS = [
     "std_mirrored", "mirrored_std", "std_vertical",
