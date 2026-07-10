@@ -26,9 +26,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import torch
 from pathlib import Path
-import matplotlib.ticker as ticker
-
-from src.plots import plot_policy_and_value, ARCH_COLORS
+from src.plots import plot_policy_and_value, ARCH_COLORS, plot_metric_vs_K
 from src.utils import get_optimal_q
 
 # ============================================================================
@@ -73,77 +71,6 @@ def load_results():
         print(f"Filtered to {len(df)} experiments with new metrics")
 
     return df
-
-
-# ============================================================================
-# HELPER FUNCTION: Generic metric plotting
-# ============================================================================
-
-def plot_metric_on_axis(ax, df_unrolls, metric_train, metric_test, title, ylabel,
-                        use_log=True, use_scientific=False):
-    """Plot a single metric on the given axis."""
-
-    K_values = sorted(df_unrolls['K'].unique())
-    architectures = sorted(df_unrolls['architecture_type'].unique())
-
-    clean_formatter = ticker.FormatStrFormatter('%g')
-
-    for arch in architectures:
-        df_arch = df_unrolls[df_unrolls['architecture_type'] == arch]
-
-        stats = {'train': {'m': [], 'p25': [], 'p75': []},
-                 'test':  {'m': [], 'p25': [], 'p75': []}}
-
-        for K in K_values:
-            for mode, col in [('train', metric_train), ('test', metric_test)]:
-                if col in df_arch.columns:
-                    vals = df_arch[df_arch['K'] == K][col].values
-                    if len(vals) > 0:
-                        vals = vals[~np.isnan(vals)]
-                        if len(vals) > 0:
-                            if use_log:
-                                vals = np.clip(vals, 1e-10, None)
-                            stats[mode]['m'].append(np.median(vals))
-                            stats[mode]['p25'].append(np.percentile(vals, 25))
-                            stats[mode]['p75'].append(np.percentile(vals, 75))
-                        else:
-                            for k in stats[mode]: stats[mode][k].append(np.nan)
-                    else:
-                        for k in stats[mode]: stats[mode][k].append(np.nan)
-                else:
-                    for k in stats[mode]: stats[mode][k].append(np.nan)
-
-        color = COLORS_ARCH[arch]
-        ax.plot(K_values, stats['train']['m'], linestyle='-', marker='o',
-               linewidth=2.5, markersize=8, color=color, label=f'Arch {arch} - Train')
-        ax.fill_between(K_values, stats['train']['p25'], stats['train']['p75'],
-                       alpha=0.15, color=color)
-
-        ax.plot(K_values, stats['test']['m'], linestyle='--', marker='s',
-               linewidth=2.5, markersize=8, color=color, label=f'Arch {arch} - Test')
-        ax.fill_between(K_values, stats['test']['p25'], stats['test']['p75'],
-                       alpha=0.15, color=color)
-
-    ax.set_xlabel('Filter Order (K)', fontweight='bold', fontsize=11)
-    ax.set_ylabel(ylabel, fontweight='bold', fontsize=12)
-    ax.set_title(title, fontweight='bold', fontsize=12)
-    ax.set_xticks(K_values)
-    ax.grid(True, alpha=0.2, linestyle=':', which='major')
-
-    if use_log:
-        ax.set_yscale('log')
-        if use_scientific:
-            ax.yaxis.set_major_formatter(ticker.LogFormatterSciNotation())
-        else:
-            ax.yaxis.set_major_formatter(clean_formatter)
-            ax.yaxis.set_major_locator(ticker.LogLocator(base=10.0, subs=(0.1, 0.2, 0.5, 1.0)))
-        ax.yaxis.set_minor_locator(ticker.NullLocator())
-    else:
-        ax.set_ylim(bottom=-0.01)
-        ax.yaxis.set_major_formatter(clean_formatter)
-        ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=6, steps=[1, 2, 5, 10]))
-
-    ax.legend(fontsize=8, loc='best', framealpha=0.9)
 
 
 # ============================================================================
@@ -200,8 +127,8 @@ def plot_comprehensive_6metrics(df, num_unrolls):
         col = idx % 2
         ax = axes[row, col]
 
-        plot_metric_on_axis(ax, df_unrolls, metric_train, metric_test,
-                           title, ylabel, use_log, use_scientific)
+        plot_metric_vs_K(ax, df_unrolls, metric_train, metric_test,
+                         title, ylabel, use_log=use_log, use_sci=use_scientific)
 
     n_runs = len(df['run_idx'].unique())
     fig.suptitle(f'Comprehensive Metrics Analysis (num_unrolls={num_unrolls})\n'

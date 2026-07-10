@@ -41,7 +41,7 @@ sys.path.insert(0, project_root)
 
 from src.environments import GeneralizedCliffWalkingEnv
 from src.algorithms.generalized_policy_iteration import PolicyIterationTrain
-from src.plots import plot_policy_and_value, ARCH_COLORS
+from src.plots import plot_policy_and_value, ARCH_COLORS, plot_metric_vs_K
 from pytorch_lightning import Trainer
 
 
@@ -130,46 +130,6 @@ def _get_train_policy_path(results_dir, K, arch, num_unrolls):
     return _get_repr_policy_path(results_dir, K, arch, num_unrolls)
 
 
-def _plot_metric_on_axis(ax, df_u, col_tr, col_te, title, ylabel,
-                         use_log=False, use_sci=False, transform_sqrt=False):
-    """Plot metric with IQR bands for both architectures, train+test."""
-    K_values = sorted(df_u['K'].unique())
-    clean_fmt = ticker.FormatStrFormatter('%g')
-
-    for arch in [1, 2]:
-        color = COLORS_ARCH[arch]
-        for mode, ls, mk, col in [('train', '-', 'o', col_tr), ('test', '--', 's', col_te)]:
-            if col not in df_u.columns:
-                continue
-            med_vals, p25_vals, p75_vals = [], [], []
-            for K in K_values:
-                v = df_u[(df_u['architecture_type'] == arch) & (df_u['K'] == K)][col].dropna().values
-                if transform_sqrt:
-                    v = np.sqrt(np.maximum(v, 0.0))
-                med_vals.append(np.median(v)        if len(v) else np.nan)
-                p25_vals.append(np.percentile(v, 25) if len(v) else np.nan)
-                p75_vals.append(np.percentile(v, 75) if len(v) else np.nan)
-            med_vals = np.array(med_vals)
-            ax.plot(K_values, med_vals, ls, marker=mk, linewidth=2.5,
-                    markersize=8, color=color,
-                    label=f'Arch {arch} — {mode.capitalize()}')
-            ax.fill_between(K_values,
-                            np.array(p25_vals), np.array(p75_vals),
-                            alpha=0.15, color=color)
-
-    if use_log:
-        ax.set_yscale('log')
-    ax.set_xlabel('Filter Order K', fontsize=10, fontweight='bold')
-    ax.set_ylabel(ylabel, fontsize=10)
-    ax.set_title(title, fontsize=11, fontweight='bold')
-    ax.set_xticks(K_values)
-    ax.grid(True, alpha=0.2, linestyle=':')
-    ax.legend(fontsize=8, framealpha=0.9)
-    ax.yaxis.set_major_formatter(clean_fmt)
-    if not use_log:
-        ax.set_ylim(bottom=0)
-
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Figure 1: Agreement figure (3×2)
 # ─────────────────────────────────────────────────────────────────────────────
@@ -208,7 +168,7 @@ def plot_agreement_figure(variant_name, results_dir, num_unrolls=NUM_UNROLLS_SHO
          r'rel. L2 error (non-sq)', False),
     ]
     for col, (col_tr, col_te, title, ylabel, use_log) in enumerate(pog_specs):
-        _plot_metric_on_axis(axes[0, col], df_u, col_tr, col_te,
+        plot_metric_vs_K(axes[0, col], df_u, col_tr, col_te,
                              title, ylabel, use_log=use_log, transform_sqrt=True)
 
     # ── Row 1: PVG (already non-squared) ──────────────────────────────
@@ -221,7 +181,7 @@ def plot_agreement_figure(variant_name, results_dir, num_unrolls=NUM_UNROLLS_SHO
          r'rel. L2 error'),
     ]
     for col, (col_tr, col_te, title, ylabel) in enumerate(pvg_specs):
-        _plot_metric_on_axis(axes[1, col], df_u, col_tr, col_te, title, ylabel)
+        plot_metric_vs_K(axes[1, col], df_u, col_tr, col_te, title, ylabel)
 
     # ── Row 2: Agreement (%) ───────────────────────────────────────────
     agree_specs = [
@@ -232,7 +192,7 @@ def plot_agreement_figure(variant_name, results_dir, num_unrolls=NUM_UNROLLS_SHO
     ]
     for col, (col_tr, col_te, title, ylabel) in enumerate(agree_specs):
         ax = axes[2, col]
-        _plot_metric_on_axis(ax, df_u, col_tr, col_te, title, ylabel)
+        plot_metric_vs_K(ax, df_u, col_tr, col_te, title, ylabel)
         ax.set_ylim(-2, 105)
         ax.axhline(100, color='green', linestyle=':', linewidth=1.2, alpha=0.6)
 
@@ -434,7 +394,7 @@ def plot_comprehensive(variant_name, results_dir, num_unrolls=NUM_UNROLLS_SHOW):
     for (row, col), (col_tr, col_te, title, ylabel, use_log, use_sci, do_sqrt) in zip(
         [(r, c) for r in range(4) for c in range(2)], specs
     ):
-        _plot_metric_on_axis(axes[row, col], df_u, col_tr, col_te,
+        plot_metric_vs_K(axes[row, col], df_u, col_tr, col_te,
                              title, ylabel, use_log=use_log,
                              transform_sqrt=do_sqrt)
 

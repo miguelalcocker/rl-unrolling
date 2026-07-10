@@ -5,6 +5,7 @@ and filter coefficients for analysis and debugging.
 """
 
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 import numpy as np
 from typing import Tuple, Optional, List
 import torch
@@ -12,6 +13,61 @@ import torch
 # Canonical architecture colors — import these in all visualization scripts
 # to ensure consistent appearance across every TFG figure.
 ARCH_COLORS = {1: '#0173B2', 2: '#DE8F05'}
+
+
+def plot_metric_vs_K(ax, df, col_tr, col_te, title, ylabel,
+                     use_log=False, use_sci=False, transform_sqrt=False):
+    """Plot train+test metric vs filter order K with median ± IQR bands.
+
+    Shared by visualize_unrolls_results_tfg.py and visualize_cliff_variations.py.
+
+    Args:
+        transform_sqrt: Apply sqrt to stored-squared values (e.g. POG stored squared).
+        use_log: Log scale on y-axis; clips values to 1e-10 before plotting.
+        use_sci: Scientific-notation formatter on log y-axis ticks.
+    """
+    K_values = sorted(df['K'].unique())
+
+    for arch in [1, 2]:
+        color = ARCH_COLORS[arch]
+        for mode, ls, mk, col in [('Train', '-', 'o', col_tr), ('Test', '--', 's', col_te)]:
+            if col not in df.columns:
+                continue
+            med_vals, p25_vals, p75_vals = [], [], []
+            for K in K_values:
+                v = df[(df['architecture_type'] == arch) & (df['K'] == K)][col].dropna().values
+                if transform_sqrt:
+                    v = np.sqrt(np.maximum(v, 0.0))
+                if use_log:
+                    v = np.clip(v, 1e-10, None)
+                med_vals.append(np.median(v)         if len(v) else np.nan)
+                p25_vals.append(np.percentile(v, 25) if len(v) else np.nan)
+                p75_vals.append(np.percentile(v, 75) if len(v) else np.nan)
+            ax.plot(K_values, np.array(med_vals), ls, marker=mk, linewidth=2.5, markersize=8,
+                    color=color, label=f'Arch {arch} — {mode}')
+            ax.fill_between(K_values, np.array(p25_vals), np.array(p75_vals),
+                            alpha=0.15, color=color)
+
+    ax.set_xlabel('Filter Order K', fontweight='bold', fontsize=10)
+    ax.set_ylabel(ylabel, fontsize=10)
+    ax.set_title(title, fontweight='bold', fontsize=11)
+    ax.set_xticks(K_values)
+    ax.grid(True, alpha=0.2, linestyle=':')
+    ax.legend(fontsize=8, framealpha=0.9)
+
+    fmt = ticker.FormatStrFormatter('%g')
+    if use_log:
+        ax.set_yscale('log')
+        if use_sci:
+            ax.yaxis.set_major_formatter(ticker.LogFormatterSciNotation())
+        else:
+            ax.yaxis.set_major_formatter(fmt)
+            ax.yaxis.set_major_locator(ticker.LogLocator(base=10.0, subs=(0.1, 0.2, 0.5, 1.0)))
+        ax.yaxis.set_minor_locator(ticker.NullLocator())
+    else:
+        ax.set_ylim(bottom=0)
+        ax.yaxis.set_major_formatter(fmt)
+        ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=6, steps=[1, 2, 5, 10]))
 
 
 def plot_policy_and_value(q: torch.Tensor, Pi: torch.Tensor,
