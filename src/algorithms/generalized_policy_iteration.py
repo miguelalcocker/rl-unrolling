@@ -61,16 +61,22 @@ class PolicyIterationTrain(pl.LightningModule):
         self.q  = torch.zeros(self.nS * self.nA, device=self.device)
 
         r = self.r.view(self.nS, self.nA)
-        fig = plot_policy_and_value(r, self.Pi, highlight_cliffs=False, goal_row=self.goal_row)
-        safe_wandb_log({"policy_plot_init": wandb.Image(fig)})
-        plt.close(fig)
+        try:
+            fig = plot_policy_and_value(r, self.Pi, highlight_cliffs=False, goal_row=self.goal_row)
+            safe_wandb_log({"policy_plot_init": wandb.Image(fig)})
+            plt.close(fig)
+        except (AssertionError, Exception):
+            pass
 
     def on_fit_end(self):
         from src.plots import plot_policy_and_value
         q = self.q.view(self.nS, self.nA)
-        fig = plot_policy_and_value(q, self.Pi, goal_row=self.goal_row)
-        safe_wandb_log({"policy_plot": wandb.Image(fig)})
-        plt.close(fig)
+        try:
+            fig = plot_policy_and_value(q, self.Pi, goal_row=self.goal_row)
+            safe_wandb_log({"policy_plot": wandb.Image(fig)})
+            plt.close(fig)
+        except (AssertionError, Exception):
+            pass
 
     def training_step(self, batch, batch_idx):
         P_pi = self.compute_transition_matrix(self.P, self.Pi)

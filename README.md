@@ -1,204 +1,115 @@
 # BellNet: Unrolling Dynamic Programming via Graph Filters
 
-A research project implementing BellNet, a neural network approach to reinforcement learning that uses graph filters to solve dynamic programming problems through unrolled policy iteration.
+Research code accompanying the study of Unrolled Policy Iteration (UPI), a neural network approach that parameterizes the Bellman operator as a learnable graph filter and solves MDPs through differentiable dynamic programming.
 
-## 🔍 Overview
+Based on the paper:
+> Rozada, S., Rey, S., Mateos, G., & Marques, A. G. (2025). *Unrolling Dynamic Programming via Graph Filters*. arXiv:2507.21705.
 
-This project explores the intersection of graph signal processing and reinforcement learning by implementing unrolled policy iteration networks. The core idea is to parameterize the Bellman operator using graph filters and learn optimal policies through differentiable dynamic programming.
+Extended by Miguel Alcocer Pérez (TFG, URJC 2026).
 
-### Key Features
+---
 
-- **Unrolled Policy Iteration**: Neural networks that unroll the policy iteration algorithm
-- **Graph Filter Parameterization**: Bellman operator implemented using learnable graph filters
-- **Environment Support**: CliffWalking and MirroredCliffWalking environments
-- **Transfer Learning**: Analysis of policy transferability between environments
-- **Comprehensive Experiments**: Multiple analysis notebooks for different aspects
-
-## 📁 Project Structure
+## Project structure
 
 ```
 rl-unrolling/
-├── src/                           # Core library code
-│   ├── algorithms/                # RL algorithms
-│   │   ├── generalized_policy_iteration.py
-│   │   └── unrolling_policy_iteration.py
-│   ├── environments.py            # Environment implementations
-│   ├── models.py                  # Neural network models
-│   ├── plots.py                   # Visualization utilities
-│   └── utils.py                   # Utility functions
-├── experiments/                   # Experiment scripts and notebooks
-│   ├── influence_K.ipynb         # Analysis of K parameter influence
-│   ├── influence_transferability.ipynb  # Transfer learning analysis
-│   └── influence_unroll.ipynb    # Unrolling depth analysis
-├── main.py                       # Main training script
-├── config.py                     # Configuration management
-├── requirements.txt              # Dependencies
-└── README.md                     # This file
+├── src/                        # Core library
+│   ├── __init__.py
+│   ├── environments.py         # CliffWalkingEnv, MirroredCliffWalkingEnv,
+│   │                           #   GeneralizedCliffWalkingEnv, WindyGridWorldEnv,
+│   │                           #   ChainMDP, RandomGraphMDP
+│   ├── models.py               # PolicyEvaluationLayer (arch 1 & 2),
+│   │                           #   PolicyImprovementLayer, UnrolledPolicyIterationModel
+│   ├── models_experimental.py  # Archive: arch 3/5 (matrix filters, joint input)
+│   ├── plots.py                # Policy / filter-coef visualisations
+│   ├── utils.py                # get_optimal_q, test_pol_err, plot_errors,
+│   │                           #   save_error_matrix_to_csv
+│   └── algorithms/
+│       ├── generalized_policy_iteration.py  # PolicyIterationTrain (pl.LightningModule)
+│       └── unrolling_policy_iteration.py    # UnrollingPolicyIterationTrain
+├── experiments/
+│   ├── runners.py              # Shared sweep loops: run_unroll_sweep,
+│   │                           #   run_k_sweep, run_transfer_sweep
+│   ├── influence_unroll.py     # Sweep N_unrolls at K ∈ {1,5,10}
+│   ├── influence_K.py          # Sweep K at num_unrolls ∈ {5,10}
+│   ├── influence_transferability.py  # Transfer CliffWalking → MirroredCliffWalking
+│   ├── cliff_variations.py     # Generalised cliff environments comparison
+│   ├── influence_unroll.ipynb  # Interactive version of influence_unroll.py
+│   ├── influence_K.ipynb
+│   └── influence_transferability.ipynb
+├── requirements.txt
+└── README.md
 ```
 
-## 🚀 Installation
+---
 
-### Prerequisites
+## Installation
 
-- Python 3.8+
-- PyTorch 2.0+
-
-### Setup
-
-1. Clone the repository:
 ```bash
-git clone https://github.com/sergiorozada12/rl-unrolling.git
+git clone https://github.com/miguelalcocker/rl-unrolling.git
 cd rl-unrolling
-```
-
-2. Create a virtual environment:
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-3. Install dependencies:
-```bash
+python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-4. Set up Weights & Biases (optional but recommended):
-```bash
-wandb login
-```
+Optionally configure Weights & Biases (`wandb login`) — set `use_logger=True` in any experiment to enable logging.
 
-## 📊 Usage
+---
 
-### Basic Training
+## Reproducing experiments
 
-Run the main training script with default parameters:
+All experiment scripts are self-contained and run from the repo root.
 
 ```bash
-python main.py
+# Sweep number of unrolls (K=1, K=5, K=10)
+python -m experiments.influence_unroll
+
+# Sweep filter order K (num_unrolls=5, 10)
+python -m experiments.influence_K
+
+# Transfer learning (CliffWalking → MirroredCliffWalking)
+python -m experiments.influence_transferability
+
+# Cliff topology variations
+python -m experiments.cliff_variations
 ```
 
-### Custom Configuration
+Results are written to `results/{n_unrolls,filter_order,transfer}/`.
 
-Modify the configuration in `config.py` or pass parameters directly:
+---
 
-```python
-from main import unrl
+## Architecture variants
 
-# Train with custom parameters
-unrl(
-    K=10,                    # Filter order
-    num_unrolls=10,         # Number of unrolling steps
-    tau=100,                # Temperature parameter
-    beta=1.0,               # Bellman operator parameter
-    lr=1e-3,                # Learning rate
-    N=500,                  # Dataset size
-    weight_sharing=False    # Whether to share weights across layers
-)
+### Architecture 1 (default)
+Single monomial feedback term:
+
+```
+q̂ = Σ_{k=0}^{K} h_k P_π^k r  +  β h_{K+1} P_π^{K+1} q_0
 ```
 
-### Running Experiments
+### Architecture 2
+Polynomial feedback of degree K₂:
 
-Execute individual experiment notebooks:
-
-```bash
-jupyter notebook experiments/influence_K.ipynb
+```
+q̂ = Σ_{k=0}^{K} h_k P_π^k r  +  β Σ_{k=K-K₂+1}^{K+K₂+1} w_k P_π^k q_0
 ```
 
-## 🧪 Experiments
+Both architectures use weight sharing across unrolling layers by default.  
+Experimental architectures (matrix filters, joint concatenated input) are
+preserved in the `research/experimental-architectures` git branch.
 
-### 1. Filter Order Analysis (`influence_K.ipynb`)
-Analyzes how the graph filter order K affects learning performance and convergence.
+---
 
-### 2. Transfer Learning Analysis (`influence_transferability.ipynb`)
-Studies how policies learned on one environment transfer to related environments.
-
-### 3. Unrolling Depth Analysis (`influence_unroll.ipynb`)
-Investigates the impact of unrolling depth on learning efficiency and final performance.
-
-## 🏗️ Architecture
-
-### Core Components
-
-#### UnrolledPolicyIterationModel
-The main neural network that implements unrolled policy iteration:
-- **PolicyEvaluationLayer**: Computes value functions using graph filters
-- **PolicyImprovementLayer**: Updates policies using softmax temperature scaling
-
-#### Environment Implementations
-- **CliffWalkingEnv**: Standard cliff walking environment
-- **MirroredCliffWalkingEnv**: Modified version with mirrored cliff placement
-
-### Graph Filter Parameterization
-
-The Bellman operator is parameterized as:
-```
-T_π = h_0 * R + Σ(k=1 to K) h_k * (P_π)^k * R + β * h_{K+1} * (P_π)^K * V
-```
-
-Where:
-- `h_k` are learnable filter coefficients
-- `P_π` is the transition matrix under policy π
-- `R` is the reward vector
-- `β` controls the influence of the previous value estimate
-
-## 📈 Monitoring
-
-The project integrates with Weights & Biases for experiment tracking:
-
-- Training loss and metrics
-- Policy visualizations
-- Filter coefficient analysis
-- Transfer learning performance
-
-## 🔧 Configuration
-
-Key hyperparameters can be configured in `config.py`:
-
-```python
-CONFIG = {
-    'model': {
-        'K': 10,                # Graph filter order
-        'num_unrolls': 10,      # Unrolling depth
-        'tau': 100,             # Temperature parameter
-        'beta': 1.0,            # Bellman parameter
-        'weight_sharing': False  # Weight sharing across layers
-    },
-    'training': {
-        'lr': 1e-3,             # Learning rate
-        'max_epochs': 5000,     # Training epochs
-        'N': 500,               # Dataset size
-    },
-    'logging': {
-        'project': 'rl-unrolling',
-        'freq_plots': 10,       # Plot frequency
-    }
-}
-```
-
-## 📝 Citation
-
-If you use this code in your research, please cite:
+## Citation
 
 ```bibtex
 @misc{rozada2025unrollingdynamicprogramminggraph,
-  title={Unrolling Dynamic Programming via Graph Filters}, 
+  title={Unrolling Dynamic Programming via Graph Filters},
   author={Sergio Rozada and Samuel Rey and Gonzalo Mateos and Antonio G. Marques},
   year={2025},
   eprint={2507.21705},
   archivePrefix={arXiv},
   primaryClass={cs.AI},
-  url={https://arxiv.org/abs/2507.21705}, 
+  url={https://arxiv.org/abs/2507.21705},
 }
 ```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📧 Contact
-
-For questions and support, please open an issue on GitHub.

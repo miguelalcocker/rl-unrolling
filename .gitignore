@@ -5,6 +5,32 @@ venv/
 .obsidian/
 checkpoints/
 
+# Project-specific: experiment outputs and private documents
+*.npz
+results/
+PLOTS/
+PLOTS_MAX/
+TFG/
+*.png
+"Imagen pegada.png"
+
+# Loose diagnostic / exploratory scripts (not part of the structured codebase)
+analysis_existent*.py
+analyze_*.py
+architecture_1_*.py
+architecture_2_*.py
+architecture_influence_*.py
+cliff_variations_experiment.py
+diverse_mdp_experiment.py
+new_loss_influence_*.py
+RUN_COMPLETE_ANALYSIS.sh
+*_README.md
+ANALYSIS_SUMMARY.md
+UNROLLS_ANALYSIS_SUMMARY.md
+K_selected_experiments_*.csv
+all_transferability_experiments_*.csv
+architecture_1_K4_init_comparison_data.npz
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
