@@ -94,44 +94,32 @@ Lee los datos experimentales ya guardados y vuelca las figuras en `TFG/memoria/i
 
 ---
 
-### Experimento 1 y 2 — Influencia del número de unrolls U y del orden del filtro K
+### Fase de entrenamiento — §4.2
 
-Corresponde a la Sección 4.2 de la memoria (apartado «Número de capas U y orden del filtro K»).
+Los tres análisis siguientes corresponden a los apartados de la Sección 4.2.
+
+**Influencia de U y K** — apartado «Número de capas U y orden del filtro K»
 
 ```bash
-# Entrenar (todas las configuraciones de U y K)
-python experiments/unrolls_experiments_analysis.py
-
-# Solo algunos valores de num_unrolls
-python experiments/unrolls_experiments_analysis.py --unrolls 5 10 15
-
-# Visualizar resultados (figuras 6-métricas + mapas de política)
-python experiments/visualize_unrolls_results_tfg.py
+python experiments/unrolls_experiments_analysis.py                     # todas las configuraciones
+python experiments/unrolls_experiments_analysis.py --unrolls 5 10 15  # solo algunos U
+python experiments/visualize_unrolls_results_tfg.py                    # figuras
 ```
 
 Resultados en `unrolls_results/`.
 
----
-
-### Experimento 3 — Barrido del orden K₂ en Arquitectura 2
-
-Corresponde a la Sección 4.2 de la memoria (apartado «Orden del filtro K₂ en la Arquitectura 2»).
+**Barrido de K₂ en Arquitectura 2** — apartado «Orden del filtro K₂ en la Arquitectura 2»
 
 ```bash
-# Entrenar
-python experiments/k2_sweep_experiments.py
-
-# Visualizar
-python experiments/visualize_k2_sweep.py
+python experiments/k2_sweep_experiments.py   # entrenar
+python experiments/visualize_k2_sweep.py     # visualizar
 ```
 
 Resultados en `k2_sweep_results/`.
 
----
+**Análisis espectral** — apartado «Análisis espectral»
 
-### Experimento 4 — Análisis de respuesta en frecuencia
-
-Corresponde a la Sección 4.2 de la memoria (apartado «Análisis espectral»). Lee coeficientes guardados en `freq_analysis_results/`; no requiere reentrenamiento.
+Lee coeficientes guardados en `freq_analysis_results/`; no requiere reentrenamiento.
 
 ```bash
 python experiments/frequency_response_analysis.py
@@ -141,19 +129,14 @@ Figuras en `freq_analysis_results/` (`T_comparison.png`, `T_composition.png`).
 
 ---
 
-### Experimento 5 — Generalización estructural (transferibilidad)
+### Fases de test — §§4.3–4.5
 
-Corresponde a las Secciones 4.3–4.5 de la memoria. Compara el comportamiento de los filtros aprendidos en entornos con topología, escala y estocasticidad distintas.
+Cubre §4.3 «Fase de test 1: variación topológica», §4.4 «Fase de test 2: variación de escala» y §4.5 «Fase de test 3: estocasticidad de P».
 
 ```bash
-# Entrenar todas las variantes
-python experiments/cliff_variations.py
-
-# Solo una variante
-python experiments/cliff_variations.py --variants std_mirrored
-
-# Visualizar (mapas de política, curvas de métricas, figura comprehensive)
-python experiments/visualize_cliff_variations.py
+python experiments/cliff_variations.py                          # todas las variantes
+python experiments/cliff_variations.py --variants std_mirrored  # solo una variante
+python experiments/visualize_cliff_variations.py                # visualizar
 ```
 
 Resultados en `cliff_variations_results/{variante}/`.
