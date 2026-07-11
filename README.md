@@ -54,13 +54,13 @@ rl-unrolling/
 │       └── unrolling_policy_iteration.py     # UnrollingPolicyIterationTrain
 │
 ├── experiments/
-│   ├── unrolls_experiments_analysis.py  # Exp. 1 y 2: efecto de U y K (Pipeline B)
-│   ├── k2_sweep_experiments.py          # Exp. 3: barrido del orden K₂ en Arq. 2
-│   ├── cliff_variations.py              # Exp. 5: generalización estructural
-│   ├── frequency_response_analysis.py   # Exp. 4: análisis de respuesta en frecuencia
-│   ├── visualize_unrolls_results_tfg.py # Figuras del Cap. 4 (Exp. 1 y 2)
-│   ├── visualize_cliff_variations.py    # Figuras del Cap. 4 (Exp. 5)
-│   └── visualize_k2_sweep.py            # Figuras del Cap. 4 (Exp. 3)
+│   ├── unrolls_experiments_analysis.py  # §4.2: influencia de U y K
+│   ├── k2_sweep_experiments.py          # §4.2: barrido del orden K₂ en Arq. 2
+│   ├── frequency_response_analysis.py   # §4.2: análisis espectral
+│   ├── cliff_variations.py              # §§4.3–4.5: generalización estructural
+│   ├── visualize_unrolls_results_tfg.py # figuras §4.2 (U y K)
+│   ├── visualize_k2_sweep.py            # figuras §4.2 (K₂)
+│   └── visualize_cliff_variations.py    # figuras §§4.3–4.5
 │
 ├── regenerate_tfg_figures.py       # Orquestador: regenera todas las figuras del Cap. 4
 ├── main.py                         # Punto de entrada rápido (entrenamiento individual)
