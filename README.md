@@ -62,7 +62,6 @@ rl-unrolling/
 │   ├── visualize_k2_sweep.py            # figuras §4.2 (K₂)
 │   └── visualize_cliff_variations.py    # figuras §§4.3–4.5
 │
-├── regenerate_tfg_figures.py       # Orquestador: regenera todas las figuras del Cap. 4
 ├── main.py                         # Punto de entrada rápido (entrenamiento individual)
 └── requirements.txt
 ```
@@ -83,16 +82,6 @@ pip install -r requirements.txt
 ## Reproducción de experimentos
 
 Todos los scripts se ejecutan desde la raíz del repositorio con el entorno virtual activado.
-
-### Regenerar todas las figuras del TFG (Cap. 4) de una sola vez
-
-```bash
-python regenerate_tfg_figures.py
-```
-
-Lee los datos experimentales ya guardados y vuelca las figuras en `TFG/memoria/images/cap4/`. No requiere reentrenar los modelos.
-
----
 
 ### Fase de entrenamiento — §4.2
 

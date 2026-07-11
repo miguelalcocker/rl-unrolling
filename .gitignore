@@ -7,6 +7,7 @@ checkpoints/
 
 # Project-specific: experiment outputs and private documents
 *.npz
+!freq_analysis_results/*.npz
 results/
 PLOTS/
 PLOTS_MAX/
